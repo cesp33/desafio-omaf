@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Desafío OMaF - Criterios de corrección</title>
+<style>
+:root{
+  --blue:#1E5E93;
+  --green:#3E8A3D;
+  --light-blue:#EAF3FA;
+  --light-green:#EEF7EA;
+  --text:#1f2937;
+  --muted:#5b6470;
+  --border:#c9d8e5;
+  --good:#2e7d32;
+  --bad:#b3261e;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f7fafc;color:var(--text)}
+.wrapper{max-width:980px;margin:0 auto;padding:24px}
+header{background:#fff;border:2px solid var(--blue);border-radius:14px;padding:24px;text-align:center;box-shadow:0 6px 18px rgba(30,94,147,.08)}
+h1{margin:0;color:var(--blue);font-size:clamp(28px,4vw,42px)}
+.subtitle{margin-top:8px;color:var(--green);font-weight:700;font-size:clamp(18px,2.5vw,24px)}
+.intro{margin-top:14px;line-height:1.55;color:var(--muted)}
+.card{background:#fff;margin-top:22px;border-radius:14px;padding:22px;box-shadow:0 6px 18px rgba(0,0,0,.06);border:1px solid var(--border)}
+.progress-wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+.progress{height:10px;background:#e7edf3;border-radius:999px;overflow:hidden;flex:1}
+.progress>div{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;transition:width .25s ease}
+.badge{font-weight:700;color:var(--blue);white-space:nowrap}
+.context{background:var(--light-blue);border-left:5px solid var(--blue);padding:14px 16px;border-radius:8px;line-height:1.5;margin-bottom:18px}
+.question{font-size:22px;font-weight:700;color:var(--blue);margin-bottom:14px}
+.options{display:grid;gap:12px}
+.option{border:2px solid #d9e3eb;background:#fff;padding:14px 16px;border-radius:10px;cursor:pointer;transition:.18s;text-align:left;font-size:17px}
+.option:hover{border-color:var(--blue);background:#f8fbfe}
+.option.selected{border-color:var(--blue);background:var(--light-blue)}
+.option.correct{border-color:var(--good);background:#edf7ed}
+.option.incorrect{border-color:var(--bad);background:#fdeeee}
+.feedback{display:none;margin-top:18px;padding:16px;border-radius:10px;line-height:1.55}
+.feedback.good{display:block;background:#edf7ed;border-left:5px solid var(--good)}
+.feedback.bad{display:block;background:#fdeeee;border-left:5px solid var(--bad)}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+button{border:0;border-radius:9px;padding:12px 18px;font-weight:700;font-size:16px;cursor:pointer}
+.primary{background:var(--blue);color:white}.primary:hover{filter:brightness(.95)}
+.secondary{background:var(--green);color:white}.secondary:hover{filter:brightness(.95)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.result{display:none;text-align:center}
+.score{font-size:54px;font-weight:800;color:var(--blue);margin:8px 0}
+.result h2{color:var(--green);font-size:30px;margin-bottom:6px}
+.summary{display:grid;gap:12px;margin-top:20px;text-align:left}
+.summary-item{padding:14px;border-radius:10px;background:#f8fafc;border:1px solid var(--border)}
+.summary-item strong{color:var(--blue)}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:26px 8px}
+@media(max-width:640px){.wrapper{padding:14px}.card{padding:16px}.question{font-size:19px}.option{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <h1>Desafío OMaF</h1>
+    <div class="subtitle">Detectives de la corrección</div>
+    <div class="intro">Respondé 5 preguntas de opción múltiple sobre <strong>criterios de corrección</strong> a partir de los problemas <em>“Un tiempo para la lectura”</em> y <em>“Los números ocultos”</em>. Al finalizar, verás tu puntaje y una explicación de cada respuesta.</div>
+  </header>
+
+  <section class="card" id="quizCard">
+    <div class="progress-wrap">
+      <div class="progress"><div id="bar"></div></div>
+      <div class="badge" id="counter">Pregunta 1 de 5</div>
+    </div>
+    <div class="context" id="context"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="actions">
+      <button class="primary" id="checkBtn" disabled>Responder</button>
+      <button class="secondary" id="nextBtn" style="display:none">Siguiente</button>
+    </div>
+  </section>
+
+  <section class="card result" id="resultCard">
+    <h2>¡Desafío completado!</h2>
+    <div class="score" id="score"></div>
+    <div id="finalMessage"></div>
+    <div class="summary" id="summary"></div>
+    <div class="actions" style="justify-content:center">
+      <button class="primary" onclick="restartQuiz()">Volver a intentar</button>
+    </div>
+  </section>
+
+  <footer>Olimpiadas de Matemática Formoseñas - OMaF | Criterios de corrección</footer>
+</div>
+
+<script>
+const questions = [
+{
+ context:'Problema: “Un tiempo para la lectura”. Laura lee 4 páginas cada 15 minutos; Pamela, 5 cada 30; Diana, 9 cada 45. Se pregunta quién lee más páginas en 3 horas.',
+ question:'¿Qué criterio de corrección es central para determinar si la dupla comprendió el problema?',
+ options:[
+  'Que escriba exactamente 180 minutos antes de comenzar.',
+  'Que use obligatoriamente una división y una multiplicación.',
+  'Que reconozca que las tres lectoras deben compararse en un mismo período de tiempo.',
+  'Que marque “Laura” aunque no muestre procedimiento.'
+ ],
+ correct:2,
+ explanation:'El criterio central es la comprensión de la relación entre tiempo y cantidad de páginas. La dupla puede trabajar con 180 minutos, con 60 minutos u otra referencia equivalente, siempre que compare en un mismo período.'
+},
+{
+ context:'Una dupla resuelve “Un tiempo para la lectura” utilizando una tabla y no repite el procedimiento del solucionario, pero compara correctamente las tres frecuencias y concluye que Laura lee más.',
+ question:'¿Cómo debería considerarse esa producción?',
+ options:[
+  'Válida, porque el criterio debe admitir estrategias matemáticamente pertinentes.',
+  'Incorrecta, porque no utilizó el procedimiento esperado por el docente.',
+  'Incompleta, porque toda resolución debe usar exactamente dos operaciones.',
+  'No evaluable, porque una tabla no es una estrategia matemática.'
+ ],
+ correct:0,
+ explanation:'Un criterio de corrección no debe imponer un único algoritmo. Si la tabla permite comparar correctamente las tres situaciones y la dupla justifica su conclusión, la estrategia es válida.'
+},
+{
+ context:'Problema: “Los números ocultos”. Cuatro números suman 2.026; dos visibles son 634 y 548, y los otros dos están ocultos y son iguales.',
+ question:'¿Qué evidencia muestra con mayor claridad que la dupla comprendió una condición fundamental del problema?',
+ options:[
+  'Que reste 2.026 - 1.182.',
+  'Que use números grandes correctamente.',
+  'Que escriba la respuesta 422 sin explicación.',
+  'Que explique que el resto debe repartirse en dos partes iguales porque los dos valores ocultos son iguales.'
+ ],
+ correct:3,
+ explanation:'La condición clave es que los dos valores ocultos son iguales. No alcanza con hallar cuánto falta para llegar a 2.026; la dupla debe relacionar ese resto con la necesidad de repartirlo en dos partes iguales.'
+},
+{
+ context:'Una dupla obtiene 422 en “Los números ocultos” mediante ensayo y comprobación: prueba con 400, calcula cuánto falta y ajusta hasta llegar a 422.',
+ question:'¿Qué criterio permite valorar adecuadamente ese procedimiento?',
+ options:[
+  'Aceptar solo la estrategia de suma, resta y división porque es la más directa.',
+  'Valorar si el procedimiento respeta las condiciones del problema y permite justificar 422.',
+  'Considerar únicamente si la cuenta final está prolija.',
+  'Descartar el procedimiento porque no coincide con la estrategia modelo.'
+ ],
+ correct:1,
+ explanation:'La corrección debe centrarse en la coherencia matemática del procedimiento. El ensayo y comprobación puede ser válido si respeta el total 2.026, la igualdad de los ocultos y permite justificar la respuesta.'
+},
+{
+ context:'Al corregir cualquiera de los dos problemas, el docente observa comprensión, estrategia, procedimiento, respuesta y justificación.',
+ question:'¿Cuál de estas afirmaciones expresa mejor el sentido de un criterio de corrección?',
+ options:[
+  'Es una lista de operaciones que todos los estudiantes deben repetir.',
+  'Sirve solamente para decidir si la respuesta final es correcta.',
+  'Es lo mismo que asignar un puntaje.',
+  'Es una referencia para reconocer evidencias matemáticas en una producción.'
+ ],
+ correct:3,
+ explanation:'Un criterio de corrección explicita qué evidencias matemáticas se espera reconocer en la producción: comprensión, decisiones, relaciones, procedimiento y justificación. No es un puntaje ni una receta única.'
+}
+];
+
+let index=0, selected=null, score=0, answers=[];
+const contextEl=document.getElementById('context');
+const questionEl=document.getElementById('question');
+const optionsEl=document.getElementById('options');
+const feedbackEl=document.getElementById('feedback');
+const checkBtn=document.getElementById('checkBtn');
+const nextBtn=document.getElementById('nextBtn');
+const counter=document.getElementById('counter');
+const bar=document.getElementById('bar');
+
+function renderQuestion(){
+ selected=null;
+ checkBtn.disabled=true;
+ nextBtn.style.display='none';
+ feedbackEl.className='feedback';
+ feedbackEl.innerHTML='';
+ const q=questions[index];
+ contextEl.textContent=q.context;
+ questionEl.textContent=q.question;
+ counter.textContent=`Pregunta ${index+1} de ${questions.length}`;
+ bar.style.width=`${(index/questions.length)*100}%`;
+ optionsEl.innerHTML='';
+ q.options.forEach((opt,i)=>{
+   const btn=document.createElement('button');
+   btn.className='option';
+   btn.textContent=`${String.fromCharCode(65+i)}) ${opt}`;
+   btn.onclick=()=>selectOption(i,btn);
+   optionsEl.appendChild(btn);
+ });
+}
+function selectOption(i,btn){
+ if(feedbackEl.classList.contains('good')||feedbackEl.classList.contains('bad')) return;
+ selected=i;
+ [...optionsEl.children].forEach(x=>x.classList.remove('selected'));
+ btn.classList.add('selected');
+ checkBtn.disabled=false;
+}
+checkBtn.onclick=()=>{
+ const q=questions[index];
+ const correct=selected===q.correct;
+ if(correct) score++;
+ answers.push({selected,correct});
+ [...optionsEl.children].forEach((btn,i)=>{
+   btn.disabled=true;
+   if(i===q.correct) btn.classList.add('correct');
+   if(i===selected && !correct) btn.classList.add('incorrect');
+ });
+ feedbackEl.className='feedback '+(correct?'good':'bad');
+ feedbackEl.innerHTML=`<strong>${correct?'¡Correcto!':'Respuesta a revisar'}</strong><br>${q.explanation}`;
+ checkBtn.style.display='none';
+ nextBtn.style.display='inline-block';
+ nextBtn.textContent=index===questions.length-1?'Ver resultado':'Siguiente';
+};
+nextBtn.onclick=()=>{
+ checkBtn.style.display='inline-block';
+ if(index<questions.length-1){index++;renderQuestion();}
+ else showResult();
+};
+function showResult(){
+ bar.style.width='100%';
+ document.getElementById('quizCard').style.display='none';
+ const result=document.getElementById('resultCard');
+ result.style.display='block';
+ document.getElementById('score').textContent=`${score} / ${questions.length}`;
+ let msg='';
+ if(score===5) msg='Excelente: identificaste con claridad el sentido de los criterios de corrección.';
+ else if(score>=3) msg='Muy buen trabajo: reconociste los aspectos centrales. Revisá las explicaciones para afianzar los criterios.';
+ else msg='Buen comienzo: volvé a revisar las explicaciones y recordá que corregir implica mirar el proceso, no solo el resultado.';
+ document.getElementById('finalMessage').textContent=msg;
+ const sum=document.getElementById('summary');
+ sum.innerHTML='';
+ questions.forEach((q,i)=>{
+   const div=document.createElement('div');
+   div.className='summary-item';
+   div.innerHTML=`<strong>Pregunta ${i+1}:</strong> ${answers[i].correct?'Correcta':'A revisar'}<br>${q.explanation}`;
+   sum.appendChild(div);
+ });
+}
+function restartQuiz(){
+ index=0;selected=null;score=0;answers=[];
+ document.getElementById('resultCard').style.display='none';
+ document.getElementById('quizCard').style.display='block';
+ checkBtn.style.display='inline-block';
+ renderQuestion();
+}
+renderQuestion();
+</script>
+</body>
+</html>
