@@ -126,6 +126,13 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:26px 8px}
     <div class="summary" id="summary"></div>
   </section>
 
+  <section class="card result" id="yaHechoCard">
+    <h2>Ya realizaste este desafío</h2>
+    <div class="score" id="yaHechoPuntaje"></div>
+    <div id="yaHechoTexto"></div>
+    <div class="envio" id="yaHechoEnvio" style="display:none"></div>
+  </section>
+
   <footer>Olimpiadas de Matemática Formoseñas - OMaF | Criterios de corrección</footer>
 </div>
 
@@ -218,30 +225,53 @@ document.getElementById('datosForm').onsubmit=(ev)=>{
  window.scrollTo(0,0);
 };
 
+// Recuerda en este celular/compu que el desafío ya se hizo, para no dejar repetirlo.
+const CLAVE_HECHO='desafio-omaf-hecho';
+function leerHecho(){try{return JSON.parse(localStorage.getItem(CLAVE_HECHO)||'null');}catch(e){return null;}}
+function guardarHecho(o){try{localStorage.setItem(CLAVE_HECHO,JSON.stringify(o));}catch(e){}}
+
 function enviarResultado(){
- const envio=document.getElementById('envio');
- if(!URL_PLANILLA||!datos) return;
+ if(!datos) return;
  const registro={
   nombre:datos.nombre, dni:datos.dni, escuela:datos.escuela, nivel:datos.nivel,
   puntaje:score, total:questions.length, intento,
   respuestas:answers.map(a=>'ABCD'[a.selected]+(a.correct?' ✓':' ✗'))
  };
+ guardarHecho({registro,enviado:false});
+ enviar(registro,document.getElementById('envio'));
+}
+
+function enviar(registro,envio){
+ if(!URL_PLANILLA) return;
  envio.style.display='block';
  envio.className='envio espera';
  envio.textContent='Enviando tus respuestas…';
  // text/plain para que el navegador no pida permiso previo (Apps Script no lo contesta)
  fetch(URL_PLANILLA,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(registro)})
   .then(()=>{
-   enviado=true;
+   guardarHecho({registro,enviado:true});
    envio.className='envio ok';
    envio.textContent='✓ Tus respuestas quedaron registradas.';
   })
   .catch(()=>{
    envio.className='envio mal';
-   envio.innerHTML='No se pudieron enviar tus respuestas. Revisá la conexión y <button class="primary" type="button" id="reenviar">Reintentar</button>';
-   document.getElementById('reenviar').onclick=enviarResultado;
+   envio.innerHTML='No se pudieron enviar tus respuestas. Revisá la conexión y <button class="primary" type="button">Reintentar</button>';
+   envio.querySelector('button').onclick=()=>enviar(registro,envio);
   });
 }
+
+// Si ya lo hizo en este dispositivo: se muestra su resultado y no se deja empezar de nuevo.
+// Si la vez anterior el envío no llegó, se reintenta solo.
+(function(){
+ const hecho=leerHecho();
+ if(!hecho||!hecho.registro) return;
+ const r=hecho.registro;
+ document.getElementById('datosCard').style.display='none';
+ document.getElementById('yaHechoCard').style.display='block';
+ document.getElementById('yaHechoPuntaje').textContent=`${r.puntaje} / ${r.total}`;
+ document.getElementById('yaHechoTexto').textContent=`${r.nombre}, ya respondiste el desafío desde este dispositivo. Ese fue tu puntaje.`;
+ if(!hecho.enviado) enviar(r,document.getElementById('yaHechoEnvio'));
+})();
 const contextEl=document.getElementById('context');
 const questionEl=document.getElementById('question');
 const optionsEl=document.getElementById('options');
