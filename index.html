@@ -77,8 +77,8 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:26px 8px}
     <div>Completá tus datos para que quede registrada tu participación.</div>
     <form id="datosForm" class="campos" novalidate>
       <div class="campo">
-        <label for="nombre">Nombre y apellido</label>
-        <input id="nombre" autocomplete="name" maxlength="80" />
+        <label for="nombre">Apellido y nombre</label>
+        <input id="nombre" autocomplete="off" maxlength="80" placeholder="Primero el apellido. Ej: Gómez María" />
       </div>
       <div class="campo">
         <label for="dni">DNI</label>
@@ -214,7 +214,7 @@ document.getElementById('datosForm').onsubmit=(ev)=>{
  const escuela=document.getElementById('escuela').value.trim().replace(/\s+/g,' ');
  const nivel=document.getElementById('nivel').value;
  const err=document.getElementById('errorDatos');
- if(nombre.length<3){err.textContent='Escribí tu nombre y apellido.';return;}
+ if(nombre.length<3){err.textContent='Escribí tu apellido y nombre.';return;}
  if(dni.length<7||dni.length>8){err.textContent='El DNI tiene que tener 7 u 8 números.';return;}
  if(escuela.length<2){err.textContent='Escribí tu escuela o institución.';return;}
  if(!nivel){err.textContent='Elegí tu nivel.';return;}
@@ -269,7 +269,7 @@ function enviar(registro,envio){
  document.getElementById('datosCard').style.display='none';
  document.getElementById('yaHechoCard').style.display='block';
  document.getElementById('yaHechoPuntaje').textContent=`${r.puntaje} / ${r.total}`;
- document.getElementById('yaHechoTexto').textContent=`${r.nombre}, ya respondiste el desafío desde este dispositivo. Ese fue tu puntaje.`;
+ document.getElementById('yaHechoTexto').textContent=`Ya respondiste el desafío desde este dispositivo (${r.nombre}). Ese fue tu puntaje.`;
  if(!hecho.enviado) enviar(r,document.getElementById('yaHechoEnvio'));
 })();
 const contextEl=document.getElementById('context');
